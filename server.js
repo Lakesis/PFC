@@ -1,20 +1,40 @@
 var http = require('http'),
 fs = require('fs'),
-html
+url = require('url'),
+path = require('path'),
+pathname, contentType
 ;
 
-fs.readFile('index.html', function (err, data) {
-  if (err) throw err;
-  html = data;
-});
-
 http.createServer(function (request, response) {
-
-	console.log("Request for received.");
-	response.writeHead(200, {'Content-Type': 'text/html'});
-	response.write(html);
-  	response.end();
-
+	pathname = '.' + url.parse(request.url).pathname; 
+	if (pathname === './') pathname = 'index.html';
+	
+	switch (path.extname(pathname)) {
+		case '.html':
+            contentType = 'text/html';
+            break;
+        case '.js':
+            contentType = 'text/javascript';
+            break;
+        case '.css':
+            contentType = 'text/css';
+            break;
+		case '.less':
+            contentType = 'stylesheet/less';
+            break;
+    }	
+	console.log("Request for "+pathname+" received.");	
+	fs.readFile(pathname, function (err, data) {
+		if (err){
+			response.writeHead(500);
+			response.end();
+			console.log(err);
+		} else {
+			response.writeHead(200, {'Content-Type': contentType});
+			response.write(data);
+			response.end();
+		}
+	});
 }).listen(8888);
 
 console.log("Listening at http://localhost:8888/")
