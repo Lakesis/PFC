@@ -22,6 +22,9 @@ http.createServer(function (request, response) {
 		case '.less':
             contentType = 'stylesheet/less';
             break;
+		case '.png':
+            contentType = 'image/png';
+            break;
     }	
 	console.log("Request for "+pathname+" received.");	
 	fs.readFile(pathname, function (err, data) {

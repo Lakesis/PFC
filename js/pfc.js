@@ -16,23 +16,24 @@ var PFC = (function(PFC, $){
 		$(window).load(function(){
 		
 			var particleSystem = new PFC.physics.System(),
-			emitter = new PFC.system.Emitter(),
 			ctx =  document.getElementById('canvas').getContext('2d'),
 			canvasWidth = $('#canvas').width(),
-			canvasHeight = $('#canvas').height()
+			canvasHeight = $('#canvas').height(),
+			particle = new PFC.physics.Particle(new PFC.physics.Vector(3,3), new PFC.physics.Vector(3,3))
 			;
-			
-			(function animationLoop(){
-				requestAnimFrame(animationLoop);
-			//	PFC.system.renderCanvasImage(ctx,particleSystem.particles);
-			})();
-			
 			ctx.fillStyle="#000000";
 			ctx.fillRect(0,0,canvasWidth,canvasHeight);
 			
+			particleSystem.particles.push(particle);
+			particle.img.onLoad = function(img){console.log("dsad");return img.src = 'resources/images/spark.png';}(particle.img);
 			
+		/*	(function animationLoop(){
+				requestAnimFrame(animationLoop);
+			//	PFC.system.renderCanvasImage(ctx,particleSystem.particles);
+			})();*/
 			
-							
+			PFC.system.renderCanvasImage(ctx,particleSystem.particles);
+			
 		});
 	}();
 
@@ -47,12 +48,14 @@ PFC.physics = {
 	Particle : function(position, velocity){
 		this.position = position;
 		this.velocity = velocity;
+		this.img = new Image();
+		
 	},
 	/*
 		FORCES
 	*/
 	System : function(){
-		this.particles = ['a'];
+		this.particles = [];
 		this.forces = [];
 	}
 };
@@ -96,11 +99,10 @@ PFC.physics.Particle.prototype = {
 
 /*		PARTICLE SYSTEM		*/
 
-PFC.physics.Particle.prototype = {
+PFC.physics.System.prototype = {
 	update : function(time){
 		this.position.iadd(this.velocity.muls(time));
 	}
-
 };
 
 /*		TOOLS		*/
@@ -117,10 +119,13 @@ PFC.system = {
 			var particle = particles[i];
 			ctx.save();
 			ctx.translate(particle.position.x, particle.position.y);
-			ctx.drawImage();
-			ctx.restore();
-		
+			ctx.drawImage(particle.img, particle.img.width/2, particle.img.height/2);
+			console.log(particle.img.width/2);
+			ctx.restore();		
 		}
 	},
-	Emitter : function(x,y) {}
+	emit : function(particleSystem,x,y) {
+		
+	
+	}
 }; 
