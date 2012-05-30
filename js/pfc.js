@@ -12,29 +12,46 @@
 
 
 var PFC = (function(PFC, $){
-	this.init = function(){
-		$(window).load(function(){
-		
-			var particleSystem = new PFC.physics.System(),
-			ctx =  document.getElementById('canvas').getContext('2d'),
-			canvasWidth = $('#canvas').width(),
-			canvasHeight = $('#canvas').height(),
-			particle = new PFC.physics.Particle(new PFC.physics.Vector(3,3), new PFC.physics.Vector(3,3))
-			;
-			ctx.fillStyle="#000000";
-			ctx.fillRect(0,0,canvasWidth,canvasHeight);
-			
-			particleSystem.particles.push(particle);
-			particle.img.onLoad = function(img){console.log("dsad");return img.src = 'resources/images/spark.png';}(particle.img);
-			
-		/*	(function animationLoop(){
-				requestAnimFrame(animationLoop);
-			//	PFC.system.renderCanvasImage(ctx,particleSystem.particles);
-			})();*/
-			
-			PFC.system.renderCanvasImage(ctx,particleSystem.particles);
-			
+
+	var ctx =  document.getElementById('canvas').getContext('2d'),
+	images = [],
+	particleSystem,
+	emitters
+	;
+
+	this.captureClick = function(){
+		$('#canvas').click(function(e){
+			e.preventDefault();
+			PFC.system.emit(particleSystem, images,e.pageX-20, e.pageY-20);
 		});
+	};
+	this.loop = function(){
+
+		particleSystem = new PFC.physics.System();
+		particleSystem.forces.push(PFC.physics.gravity);
+		particleSystem.forces.push(PFC.physics.wind);
+		particleSystem.forces.push(PFC.physics.drag);
+
+		(function animationLoop(){
+			requestAnimFrame(animationLoop);
+			particleSystem.update(images, 1/60);
+			PFC.system.renderCanvasImage(ctx,particleSystem.particles);
+		})();		
+
+
+	};
+	this.init = function(){
+
+		images[0] = new Image();
+		images[0].onLoad = $(window).load(function(){ this.loop();});
+		images[0].src = 'resources/images/spark.png';
+
+		this.captureClick();
+
+		ctx.canvas.width  = window.innerWidth;
+ 		ctx.canvas.height = window.innerHeight;
+		ctx.fillStyle="#000000";
+		ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
 	}();
 
 	return PFC; 
@@ -45,15 +62,20 @@ PFC.physics = {
 		this.x = x;
 		this.y = y;
 	},
-	Particle : function(position, velocity){
+	Particle : function(position){
 		this.position = position;
-		this.velocity = velocity;
-		this.img = new Image();
-		
+		this.velocity = new PFC.physics.Vector(0,0);
+		this.img;
 	},
-	/*
-		FORCES
-	*/
+	gravity : function(particle, time){
+		particle.velocity.y += 50*time;
+	},
+	wind : function(particle, time){
+		particle.velocity.x += 50*Math.random*time;
+	},
+	drag : function(particle, time){
+		particle.velocity.imuls(0.97);
+	},
 	System : function(){
 		this.particles = [];
 		this.forces = [];
@@ -82,8 +104,8 @@ PFC.physics.Vector.prototype = {
 	subs : function(n) {return new PFC.physics.Vector(this.x-n, this.y-n);},
 	isubs : function(s) { this.x-= s; this.y-= s; return this;},
 
-	add : function(v) {return new PFC.physics.Vector(this.x-v.x, this.y-v.y);},
-	iadd : function(v) { this.x-= v.x; this.y-= v.y; return this;},
+	sub : function(v) {return new PFC.physics.Vector(this.x-v.x, this.y-v.y);},
+	isub : function(v) { this.x-= v.x; this.y-= v.y; return this;},
 	
 	set : function(x,y) {this.x = x; this.y = y;}
 };
@@ -94,14 +116,24 @@ PFC.physics.Particle.prototype = {
 	update : function(time){
 		this.position.iadd(this.velocity.muls(time));
 	}
-
 };
 
 /*		PARTICLE SYSTEM		*/
 
 PFC.physics.System.prototype = {
-	update : function(time){
-		this.position.iadd(this.velocity.muls(time));
+	update : function(images, time){
+	/*	for (var i = 0; i < emitters.length; i++ ){
+			var emiter = emitters[i];
+			emiter.emit(this,images,emiter.position.x, emiter.position.y);
+		}*/
+		for (var i = 0; i < this.particles.length; i++ ){
+			var particle = this.particles[i];
+			for (var j = 0; j < this.forces.length; j++ ){
+				var force = this.forces[j];
+				force(particle, time);
+			}
+			particle.update(time)
+		}
 	}
 };
 
@@ -119,13 +151,26 @@ PFC.system = {
 			var particle = particles[i];
 			ctx.save();
 			ctx.translate(particle.position.x, particle.position.y);
-			ctx.drawImage(particle.img, particle.img.width/2, particle.img.height/2);
-			console.log(particle.img.width/2);
+			ctx.drawImage(particle.img, particle.img.width, particle.img.height);
 			ctx.restore();		
 		}
 	},
-	emit : function(particleSystem,x,y) {
+	emit : function(particleSystem,images,x,y){
+		var position = new PFC.physics.Vector(x,y); 
+		console.log(position);
 		
-	
-	}
+		for (var i = 0; i < 100; i++){
+			var	particle = new PFC.physics.Particle(position),
+			alpha = PFC.tools.fuzzy(Math.PI),
+			radius = Math.random()*100
+			;
+			
+			particle.velocity.x = Math.cos(alpha)*radius;
+			particle.velocity.y = Math.sin(alpha)*radius;
+			particle.img = images[0];
+			
+			particleSystem.particles.push(particle);
+		}		
+	}	
 }; 
+
