@@ -18,6 +18,7 @@ var PFC = (function(PFC, $){
 	particleSystem,
 	emitters
 	;
+	
 
 	this.captureClick = function(){
 		$('#canvas').click(function(e){
@@ -67,7 +68,7 @@ PFC.physics = {
 		this.velocity = new PFC.physics.Vector(0,0);
 		this.img;
 		this.life = 0;
-		this.MAXLIFE = 400;
+		this.MAXLIFE = 500;
 		this.active = true;
 	},
 	gravity : function(particle, time){
@@ -134,7 +135,7 @@ PFC.physics.System.prototype = {
 				force(particle, time);
 			}
 			particle.update(time);
-			if (!particle.active) this.particles.splice(i,1);
+			if (!particle.active) {delete this.particles[i]; this.particles.splice(i,1);}
 		}
 	}
 };
@@ -172,6 +173,6 @@ PFC.system = {
 			
 			particleSystem.particles.push(particle);
 		}		
-	}	
+	},
 }; 
 

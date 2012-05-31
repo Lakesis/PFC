@@ -1,11 +1,12 @@
-var http = require('http'),
+var http = require('http'), server,
 fs = require('fs'),
 url = require('url'),
 path = require('path'),
-pathname, contentType
+io = require('socket.io'), socket, 
+pathname, contentType, particleSystem
 ;
 
-http.createServer(function (request, response) {
+server = http.createServer(function (request, response) {
 	pathname = '.' + url.parse(request.url).pathname; 
 	if (pathname === './') pathname = 'index.html';
 	
@@ -37,7 +38,16 @@ http.createServer(function (request, response) {
 			response.write(data);
 			response.end();
 		}
-	});
+	});	
 }).listen(8888);
 
-console.log("Listening at http://localhost:8888/")
+socket = io.listen(server);
+socket.on('connection', function (client) {
+	
+	client.on('update', function (data) {
+		client.broadcast('update',data);
+	});
+});
+
+
+console.log("Listening at http://localhost:8888/");
